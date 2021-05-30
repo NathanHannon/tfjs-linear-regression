@@ -9,6 +9,22 @@ async function plot(pointsArray, featureName) {
     );
 }
 
+function normalize(tensor) {
+    const min = tensor.min();
+    const max = tensor.max();
+    const normalizedTensor = tensor.sub(min).div(max.sub(min));
+    return {
+        tensor: normalizedTensor,
+        min,
+        max
+    }
+}
+
+function denormalize(tensor, min, max) {
+    const denormalizedTensor = tensor.mul(max.sub(min)).add(min);
+    return denormalizedTensor;
+}
+
 async function run() {
     const houseSalesDataset = tf.data.csv("http://127.0.0.1:5500/kc_house_data.csv");
     const sampleDataset = houseSalesDataset.take(10);
@@ -31,6 +47,14 @@ async function run() {
 
     featureTensor.print();
     labelTensor.print();
+
+    const normalizedFeature = normalize(featureTensor);
+    const normalizedLabel = normalize(labelTensor);
+
+    normalizedFeature.tensor.print();
+    normalizedLabel.tensor.print();
+
+    denormalize(normalizedFeature.tensor, normalizedFeature.min, normalizedFeature.max).print();
 }
 
 run();
