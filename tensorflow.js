@@ -29,7 +29,10 @@ function createModel() {
     const model = tf.sequential();
 
     model.add(tf.layers.dense({
-
+        units: 1,
+        useBias: true,
+        activation: 'linear',
+        inputDim: 1,
     }));
 
     return model;
