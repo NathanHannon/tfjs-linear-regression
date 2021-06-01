@@ -35,7 +35,28 @@ function createModel() {
         inputDim: 1,
     }));
 
+    const optimizer = tf.train.sgd(0.1);
+    model.compile({
+        loss: 'meanSquaredError',
+        optimizer,
+    });
+
     return model;
+}
+
+async function trainModel(model, trainingFeatureTensor, trainingLabelTensor) {
+    const { onBatchEnd, onEpochEnd } = tfvis.show.fitCallbacks(
+        { name: "Training Performance" },
+        ['loss']
+    )
+
+    return model.fit(trainingFeatureTensor, trainingLabelTensor, {
+        epochs: 20,
+        validationSplit: 0.2,
+        callbacks: {
+            onEpochEnd
+        }
+    });
 }
 
 async function run() {
@@ -48,6 +69,10 @@ async function run() {
         y: record.price,
     }));
     const points = await pointsDataset.toArray();
+    // If odd number of elements, remove one element
+    if (points.length % 2 !== 0) {
+        points.pop();
+    };
     tf.util.shuffle(points);
     plot(points, "Square Feet");
 
@@ -67,6 +92,19 @@ async function run() {
     const [trainingLabelTensor, testingLabelTensor] = tf.split(normalizedLabel.tensor, 2);
 
     const model = createModel();
+    tfvis.show.modelSummary({ name: "Model Summary" }, model);
+    const layer = model.getLayer(undefined, 0);
+    tfvis.show.layer({ name: "Layer 1" }, layer);
+
+    const result = await trainModel(model, trainingFeatureTensor, trainingLabelTensor);
+    const trainingLoss = result.history.loss.pop();
+    console.log(`Training set loss: ${trainingLoss}`);
+    const validationLoss = result.history.val_loss.pop();
+    console.log(`Validation set loss: $ ${validationLoss}`);
+
+    const lossTensor = model.evaluate(testingFeatureTensor, testingLabelTensor);
+    const loss = await lossTensor.dataSync();
+    console.log(`Testing set loss: ${loss}`);
 }
 
 run();
