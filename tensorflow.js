@@ -1,3 +1,10 @@
+/** This function plots the square footage and prices
+ * 
+ * @param {number[]} pointsArray 
+ * @param {string} featureName 
+ * @param {number[]} predictedPointsArray 
+ */
+
 async function plot(pointsArray, featureName, predictedPointsArray = null) {
     const values = [pointsArray.slice(0, 1000)];
     const series = ["original"];
@@ -17,6 +24,9 @@ async function plot(pointsArray, featureName, predictedPointsArray = null) {
     )
 }
 
+/** This function plots the predicted curve on the graph
+ * 
+ */
 async function plotPredictionLine() {
     const [xs, ys] = tf.tidy(() => {
         const normalizedXs = tf.linspace(0, 1, 100);
@@ -35,6 +45,13 @@ async function plotPredictionLine() {
     await plot(points, "Square feet", predictedPoints);
 }
 
+/** This function normalizes a tensor
+ * 
+ * @param {*} tensor 
+ * @param {number} previousMin 
+ * @param {number} previousMax 
+ * @returns 
+ */
 function normalize(tensor, previousMin = null, previousMax = null) {
     const min = previousMin || tensor.min();
     const max = previousMax || tensor.max();
@@ -46,12 +63,24 @@ function normalize(tensor, previousMin = null, previousMax = null) {
     };
 }
 
+/** This function denormalizes a tensor
+ * 
+ * @param {*} tensor 
+ * @param {number} min 
+ * @param {number} max 
+ * @returns 
+ */
 function denormalize(tensor, min, max) {
     const denormalizedTensor = tensor.mul(max.sub(min)).add(min);
     return denormalizedTensor;
 }
 
 let model;
+
+/** This function creates a machine learning model with the sigmoid function
+ * 
+ * @returns {any[]} model
+ */
 function createModel() {
     model = tf.sequential();
 
@@ -81,6 +110,13 @@ function createModel() {
     return model;
 }
 
+/** This function divides the dataset into training and testing data
+ * 
+ * @param {*[]} model 
+ * @param {*} trainingFeatureTensor 
+ * @param {*} trainingLabelTensor 
+ * @returns 
+ */
 async function trainModel(model, trainingFeatureTensor, trainingLabelTensor) {
 
     const { onBatchEnd, onEpochEnd } = tfvis.show.fitCallbacks(
@@ -103,6 +139,9 @@ async function trainModel(model, trainingFeatureTensor, trainingLabelTensor) {
     });
 }
 
+/** This function predicts the housing price, given square feet
+ * 
+ */
 async function predict() {
     const predictionInput = parseInt(document.getElementById("prediction-input").value);
     if (isNaN(predictionInput)) {
@@ -126,11 +165,18 @@ async function predict() {
 }
 
 const storageID = "kc-house-price-regression";
+
+/** This function saves the model
+ * 
+ */
 async function save() {
     const saveResults = await model.save(`localstorage://${storageID}`);
     document.getElementById("model-status").innerHTML = `Trained (saved ${saveResults.modelArtifactsInfo.dateSaved})`;
 }
 
+/** This function loads a saved model
+ * 
+ */
 async function load() {
     const storageKey = `localstorage://${storageID}`;
     const models = await tf.io.listModels();
@@ -152,6 +198,9 @@ async function load() {
     }
 }
 
+/** This function tests a model
+ * 
+ */
 async function test() {
     const lossTensor = model.evaluate(testingFeatureTensor, testingLabelTensor);
     const loss = (await lossTensor.dataSync())[0];
@@ -160,6 +209,9 @@ async function test() {
     document.getElementById("testing-status").innerHTML = `Testing set loss: ${loss.toPrecision(5)}`;
 }
 
+/** This function trains a new model on the provided dataset
+ * 
+ */
 async function train() {
     // Disable all buttons and update status
     ["train", "test", "load", "predict", "save"].forEach(id => {
@@ -188,6 +240,11 @@ async function train() {
     document.getElementById("predict-button").removeAttribute("disabled");
 }
 
+/** This function plots the given data and the prediction lines
+ * 
+ * @param {number} weight 
+ * @param {number} bias 
+ */
 async function plotParams(weight, bias) {
     model.getLayer(null, 0).setWeights([
         tf.tensor2d([[weight]]), // Kernel (input multiplier)
@@ -198,6 +255,9 @@ async function plotParams(weight, bias) {
     tfvis.show.layer({ name: "Layer 1" }, layer);
 }
 
+/** This function toggles the TensorFlow.js visor
+ * 
+ */
 async function toggleVisor() {
     tfvis.visor().toggle();
 }
