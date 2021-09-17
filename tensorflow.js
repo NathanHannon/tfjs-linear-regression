@@ -22,8 +22,8 @@ async function plotPredictionLine() {
         const normalizedXs = tf.linspace(0, 1, 100);
         const normalizedYs = model.predict(normalizedXs.reshape([100, 1]));
 
-        const xs = denormalise(normalizedXs, normalizedFeature.min, normalizedFeature.max);
-        const ys = denormalise(normalizedYs, normalizedLabel.min, normalizedLabel.max);
+        const xs = denormalize(normalizedXs, normalizedFeature.min, normalizedFeature.max);
+        const ys = denormalize(normalizedYs, normalizedLabel.min, normalizedLabel.max);
 
         return [xs.dataSync(), ys.dataSync()];
     });
@@ -46,7 +46,7 @@ function normalize(tensor, previousMin = null, previousMax = null) {
     };
 }
 
-function denormalise(tensor, min, max) {
+function denormalize(tensor, min, max) {
     const denormalizedTensor = tensor.mul(max.sub(min)).add(min);
     return denormalizedTensor;
 }
@@ -116,7 +116,7 @@ async function predict() {
             const inputTensor = tf.tensor1d([predictionInput]);
             const normalizedInput = normalize(inputTensor, normalizedFeature.min, normalizedFeature.max);
             const normalizedOutputTensor = model.predict(normalizedInput.tensor);
-            const outputTensor = denormalise(normalizedOutputTensor, normalizedLabel.min, normalizedLabel.max);
+            const outputTensor = denormalize(normalizedOutputTensor, normalizedLabel.min, normalizedLabel.max);
             const outputValue = outputTensor.dataSync()[0];
             const outputValueRounded = (outputValue / 1000).toFixed(0) * 1000;
             document.getElementById("prediction-output").innerHTML = `The predicted house price is <br>`
