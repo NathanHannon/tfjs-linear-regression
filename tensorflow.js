@@ -19,11 +19,11 @@ async function plot(pointsArray, featureName, predictedPointsArray = null) {
 
 async function plotPredictionLine() {
     const [xs, ys] = tf.tidy(() => {
-        const normalisedXs = tf.linspace(0, 1, 100);
-        const normalisedYs = model.predict(normalisedXs.reshape([100, 1]));
+        const normalizedXs = tf.linspace(0, 1, 100);
+        const normalizedYs = model.predict(normalizedXs.reshape([100, 1]));
 
-        const xs = denormalise(normalisedXs, normalisedFeature.min, normalisedFeature.max);
-        const ys = denormalise(normalisedYs, normalisedLabel.min, normalisedLabel.max);
+        const xs = denormalise(normalizedXs, normalizedFeature.min, normalizedFeature.max);
+        const ys = denormalise(normalizedYs, normalizedLabel.min, normalizedLabel.max);
 
         return [xs.dataSync(), ys.dataSync()];
     });
@@ -35,20 +35,20 @@ async function plotPredictionLine() {
     await plot(points, "Square feet", predictedPoints);
 }
 
-function normalise(tensor, previousMin = null, previousMax = null) {
+function normalize(tensor, previousMin = null, previousMax = null) {
     const min = previousMin || tensor.min();
     const max = previousMax || tensor.max();
-    const normalisedTensor = tensor.sub(min).div(max.sub(min));
+    const normalizedTensor = tensor.sub(min).div(max.sub(min));
     return {
-        tensor: normalisedTensor,
+        tensor: normalizedTensor,
         min,
         max
     };
 }
 
 function denormalise(tensor, min, max) {
-    const denormalisedTensor = tensor.mul(max.sub(min)).add(min);
-    return denormalisedTensor;
+    const denormalizedTensor = tensor.mul(max.sub(min)).add(min);
+    return denormalizedTensor;
 }
 
 let model;
@@ -114,9 +114,9 @@ async function predict() {
     else {
         tf.tidy(() => {
             const inputTensor = tf.tensor1d([predictionInput]);
-            const normalisedInput = normalise(inputTensor, normalisedFeature.min, normalisedFeature.max);
-            const normalisedOutputTensor = model.predict(normalisedInput.tensor);
-            const outputTensor = denormalise(normalisedOutputTensor, normalisedLabel.min, normalisedLabel.max);
+            const normalizedInput = normalize(inputTensor, normalizedFeature.min, normalizedFeature.max);
+            const normalizedOutputTensor = model.predict(normalizedInput.tensor);
+            const outputTensor = denormalise(normalizedOutputTensor, normalizedLabel.min, normalizedLabel.max);
             const outputValue = outputTensor.dataSync()[0];
             const outputValueRounded = (outputValue / 1000).toFixed(0) * 1000;
             document.getElementById("prediction-output").innerHTML = `The predicted house price is <br>`
@@ -203,7 +203,7 @@ async function toggleVisor() {
 }
 
 let points;
-let normalisedFeature, normalisedLabel;
+let normalizedFeature, normalizedLabel;
 let trainingFeatureTensor, testingFeatureTensor, trainingLabelTensor, testingLabelTensor;
 async function run() {
     // Ensure backend has initialized
@@ -232,14 +232,14 @@ async function run() {
     const labelValues = points.map(p => p.y);
     const labelTensor = tf.tensor2d(labelValues, [labelValues.length, 1]);
 
-    // Normalise features and labels
-    normalisedFeature = normalise(featureTensor);
-    normalisedLabel = normalise(labelTensor);
+    // Normalize features and labels
+    normalizedFeature = normalize(featureTensor);
+    normalizedLabel = normalize(labelTensor);
     featureTensor.dispose();
     labelTensor.dispose();
 
-    [trainingFeatureTensor, testingFeatureTensor] = tf.split(normalisedFeature.tensor, 2);
-    [trainingLabelTensor, testingLabelTensor] = tf.split(normalisedLabel.tensor, 2);
+    [trainingFeatureTensor, testingFeatureTensor] = tf.split(normalizedFeature.tensor, 2);
+    [trainingLabelTensor, testingLabelTensor] = tf.split(normalizedLabel.tensor, 2);
 
     // Update status and enable train button
     document.getElementById("model-status").innerHTML = "No model trained";
