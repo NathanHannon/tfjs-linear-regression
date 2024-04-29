@@ -45,12 +45,14 @@ async function plotPredictionLine() {
     await plot(points, "Square feet", predictedPoints);
 }
 
-/** This function normalizes a tensor
- * 
- * @param {*} tensor 
- * @param {number} previousMin 
- * @param {number} previousMax 
- * @returns 
+
+/**
+ * Normalizes a tensor by subtracting the minimum value and dividing by the range.
+ * If previousMin and previousMax are provided, they will be used instead of calculating the min and max from the tensor.
+ * @param {tf.Tensor} tensor - The input tensor to be normalized.
+ * @param {tf.Tensor} previousMin - The previous minimum value. (Optional)
+ * @param {tf.Tensor} previousMax - The previous maximum value. (Optional)
+ * @returns {Object} - An object containing the normalized tensor, minimum value, and maximum value.
  */
 function normalize(tensor, previousMin = null, previousMax = null) {
     const min = previousMin || tensor.min();
@@ -63,12 +65,13 @@ function normalize(tensor, previousMin = null, previousMax = null) {
     };
 }
 
-/** This function denormalizes a tensor
+/**
+ * Denormalizes a tensor using the given min and max values.
  * 
- * @param {*} tensor 
- * @param {number} min 
- * @param {number} max 
- * @returns 
+ * @param {tf.Tensor} tensor - The tensor to denormalize.
+ * @param {number} min - The minimum value used for normalization.
+ * @param {number} max - The maximum value used for normalization.
+ * @returns {tf.Tensor} The denormalized tensor.
  */
 function denormalize(tensor, min, max) {
     const denormalizedTensor = tensor.mul(max.sub(min)).add(min);
@@ -77,9 +80,9 @@ function denormalize(tensor, min, max) {
 
 let model;
 
-/** This function creates a machine learning model with the sigmoid function
- * 
- * @returns {any[]} model
+/**
+ * Creates a TensorFlow.js model for linear regression.
+ * @returns {tf.Sequential} The created model.
  */
 function createModel() {
     model = tf.sequential();
@@ -110,12 +113,12 @@ function createModel() {
     return model;
 }
 
-/** This function divides the dataset into training and testing data
- * 
- * @param {*[]} model 
- * @param {*} trainingFeatureTensor 
- * @param {*} trainingLabelTensor 
- * @returns 
+/**
+ * Trains the model using the provided training feature and label tensors.
+ * @param {tf.Model} model - The TensorFlow.js model to be trained.
+ * @param {tf.Tensor} trainingFeatureTensor - The input feature tensor for training.
+ * @param {tf.Tensor} trainingLabelTensor - The target label tensor for training.
+ * @returns {Promise} A promise that resolves when the model training is complete.
  */
 async function trainModel(model, trainingFeatureTensor, trainingLabelTensor) {
 
@@ -139,8 +142,11 @@ async function trainModel(model, trainingFeatureTensor, trainingLabelTensor) {
     });
 }
 
-/** This function predicts the housing price, given square feet
- * 
+
+/**
+ * Predicts the house price based on the input value.
+ * @async
+ * @function predict
  */
 async function predict() {
     const predictionInput = parseInt(document.getElementById("prediction-input").value);
@@ -166,16 +172,20 @@ async function predict() {
 
 const storageID = "kc-house-price-regression";
 
-/** This function saves the model
- * 
+/**
+ * Saves the model to local storage and updates the model status element.
+ * @async
+ * @function save
+ * @returns {Promise<void>} A promise that resolves when the model is saved.
  */
 async function save() {
     const saveResults = await model.save(`localstorage://${storageID}`);
     document.getElementById("model-status").innerHTML = `Trained (saved ${saveResults.modelArtifactsInfo.dateSaved})`;
 }
 
-/** This function loads a saved model
- * 
+/**
+ * Loads a saved model from local storage and performs necessary operations.
+ * @returns {Promise<void>} A promise that resolves when the model is loaded and operations are performed.
  */
 async function load() {
     const storageKey = `localstorage://${storageID}`;
@@ -198,8 +208,9 @@ async function load() {
     }
 }
 
-/** This function tests a model
- * 
+/**
+ * Performs a test on the model using the testing feature and label tensors.
+ * Prints the testing set loss to the console and updates the testing status element on the page.
  */
 async function test() {
     const lossTensor = model.evaluate(testingFeatureTensor, testingLabelTensor);
@@ -209,8 +220,10 @@ async function test() {
     document.getElementById("testing-status").innerHTML = `Testing set loss: ${loss.toPrecision(5)}`;
 }
 
-/** This function trains a new model on the provided dataset
- * 
+/**
+ * Trains the model by disabling buttons, creating the model, plotting the prediction line,
+ * training the model, and updating the model status.
+ * @returns {Promise<void>} A promise that resolves when the training is complete.
  */
 async function train() {
     // Disable all buttons and update status
@@ -240,10 +253,11 @@ async function train() {
     document.getElementById("predict-button").removeAttribute("disabled");
 }
 
-/** This function plots the given data and the prediction lines
- * 
- * @param {number} weight 
- * @param {number} bias 
+/**
+ * Sets the weights of the first layer in the model and plots the prediction line.
+ * @param {number} weight - The weight value for the input multiplier.
+ * @param {number} bias - The bias value.
+ * @returns {Promise<void>} - A promise that resolves when the prediction line is plotted.
  */
 async function plotParams(weight, bias) {
     model.getLayer(null, 0).setWeights([
@@ -255,8 +269,11 @@ async function plotParams(weight, bias) {
     tfvis.show.layer({ name: "Layer 1" }, layer);
 }
 
-/** This function toggles the TensorFlow.js visor
- * 
+/**
+ * Toggles the visibility of the TensorFlow.js visor.
+ * @async
+ * @function toggleVisor
+ * @returns {Promise<void>} A promise that resolves when the visor is toggled.
  */
 async function toggleVisor() {
     tfvis.visor().toggle();
